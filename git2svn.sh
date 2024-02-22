@@ -44,7 +44,7 @@ fi
 echo ${svn_psw}
 svn_ip="192.168.100.223"
 #svn 服务器最后拼接的地址，目录默认/svn/
-svn_url="https://${svn_ip}/svn/P6-01-HG/箱号识别服务/源码/ContainerOCR"
+svn_url="https://${svn_ip}/svn/P6-01-HG/svn-to-git"
 
 ### 当前路径下被读取的项目列表
 list_file="list.txt"

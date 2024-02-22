@@ -39,6 +39,9 @@ name="jadehh/svn-to-git"
 #svn 仓库
 svn_name="jiandehui"
 svn_psw="test"
+if [ -n $1 ]; then svn_psw=$1
+fi
+echo ${svn_psw}
 svn_ip="192.168.100.223"
 #svn 服务器最后拼接的地址，目录默认/svn/
 svn_url="https://${svn_ip}/svn/P6-01-HG/箱号识别服务/源码/ContainerOCR"

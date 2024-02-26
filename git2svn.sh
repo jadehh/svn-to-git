@@ -8,7 +8,7 @@
 ### 2 首次运行可能需要添加主机到信任列表，请手动提前执行下面的几条命令，相应变量替换为实际内容
 ###   git clone ${git_url}${name}.git
 ###   svn mkdir --parents ${svn_url}${name}/test -m "Importing git repo ${git_url}${name}" ${svn_login}
-### 3 迁移方式两种，默认git id版本方式，如果该方式不成功，则 执行脚本 ./git2svn.sh 
+### 3 迁移方式两种，默认git id版本方式，如果该方式不成功，则 执行脚本 ./git2svn.sh
 ###   更换迁移方式：需要先将本脚本之前下载的相关本地git仓库删除
 ### 4 可能还需要设置git邮箱 git config --global user.email "email@example.com"  git config --global user.name "Mona Lisa"
 
@@ -25,26 +25,24 @@
 # 修复多分支没有回到主目录bug
 
 #####################配置修改############################
+githis_name="main"
+svn_url="https://192.168.100.223/svn/P6-01-HG/svn-to-git"
 echo "--------2.2"
 # 保留最近历史提交记录的数量
 max_count=10
 # 保留最近【分支和版本标签】历史提交记录的数量
 branch_max_count=1
-#git 仓库
-git_name="jadehh%40live.com"
-git_psw=""
-# git服务器的ip和端口,注意结尾不要有/
-git_ip="github.com"
-name="jadehh/svn-to-git"
+
+
 #svn 仓库
 svn_name="jiandehui"
 svn_psw="test"
 if [ -n $1 ]; then svn_psw=$1
 fi
 echo ${svn_psw}
-svn_ip="192.168.100.223"
+
 #svn 服务器最后拼接的地址，目录默认/svn/
-svn_url="https://${svn_ip}/svn/P6-01-HG/svn-to-git"
+
 
 ### 当前路径下被读取的项目列表
 list_file="list.txt"
@@ -55,16 +53,17 @@ thread_num=5
 git_url="https://${git_name}:${git_psw}@${git_ip}/"
 svn_login=" --username ${svn_name} --password ${svn_psw} "
 ####################主程序############################
-echo "----git_url:${git_url}"
 echo "----svn_url:${svn_url} ${svn_login}"
 echo "----list_file:${list_file}"
 # 路径
-DIRNAME=$0
-if [ "${DIRNAME:0:1}" = "/" ];then
-    CUR=`dirname $DIRNAME`
-else
-    CUR="`pwd`"/"`dirname $DIRNAME`"
-fi
+#DIRNAME=$0
+#if [ "${DIRNAME:0:1}" = "/" ];then
+#    CUR=`dirname $DIRNAME`
+#else
+#    CUR="`pwd`"/"`dirname $DIRNAME`"
+#fi
+CUR=~/code/
+mkdir ${CUR}
 echo "----当前路径：" $CUR
 # 项目列表
 starttime=$(date +%H%M%S)
@@ -81,39 +80,36 @@ rm -f ${tempfifo}
 for ((i=1;i<=${thread_num};i++))
 do
 {
-    echo 
+    echo
 }
-done >&6 
+done >&6
 #######################
  read -u6
 {
-      echo "----start ${name}" 
-      pro_name=${name##*/}
+      echo "----start ${PWD}"
+      pro_name=${PWD##*/}
+
+      echo "拷贝git项目到 ${CUR}/${pro_name}"
+      cp -r $PWD ${CUR}/${pro_name}
+
       echo $pro_name
       cd $CUR
       ###########清理文件#############
-      echo "---清理文件: 清理过程错误提示可忽略" ${name}
-      rm -rf ${CUR}/svn_repo/${pro_name}
-    rm -rf ${CUR}/svn_repo/源码
-      rm -rf ${CUR}/${pro_name}
-      svn delete ${svn_url}/源码 ${svn_login} --message "Deleting ${svn_url}"
-      svn mkdir --parents ${svn_url}/源码 -m "创建文件夹"
-      echo "---清理结束" ${name}
-      mkdir --parents ${CUR}/svn_repo/源码
+
+      mkdir ${CUR}/svn_repo/
+      mkdir ${CUR}/svn_repo/${pro_name}
       BASE_DIR=$CUR
       GIT_DIR="${CUR}/${pro_name}"
-      SVN_DIR="${CUR}/svn_repo/源码/trunk"
-
+      SVN_DIR="${CUR}/svn_repo/${pro_name}/源码/trunk"
       SVN_AUTH=$svn_login
-      #echo "----$name 当前路径" $PWD
-      git clone ${git_url}${name}.git
       cd $GIT_DIR
       #echo "----$name 当前路径" $PWD
       svn mkdir --parents ${svn_url}/源码/trunk ${svn_url}/源码/branches ${svn_url}/源码/tags -m "Importing git repo http://${git_name}@${git_ip}/${name}" ${svn_login}
-      cd $CUR/svn_repo
+      mkdir  $CUR/svn_repo/${pro_name}
+      cd $CUR/svn_repo/${pro_name}
       svn co ${svn_url}/源码
-      echo "svn co ${svn_url}"
-      ############################# 
+#      echo "svn co ${svn_url}"
+#      #############################
         function svn_checkin {
             echo '... adding files' ${pro_name}
             for file in `svn st ${SVN_DIR} | awk -F" " '{print $1 "|" $2}'`; do
@@ -149,26 +145,26 @@ done >&6
         }
         ##################################################
         function git2svn_start {
-            for commit in `cd $GIT_DIR && git rev-list -${COMMIT_COUNT} ${githis_name} --reverse && cd $BASE_DIR`; do 
+            for commit in `cd $GIT_DIR && git rev-list -${COMMIT_COUNT} ${githis_name} --reverse && cd $BASE_DIR`; do
             echo "...Committing $commit..." ${pro_name};
             author=`cd ${GIT_DIR} && git log -n 1 --pretty=format:%an ${commit} && cd ${BASE_DIR}`;
             msg=`cd ${GIT_DIR} && git log -n 1 --pretty=format:%s ${commit} && cd ${BASE_DIR}`;
-            
+
             # Checkout the current commit on git
             echo '... checking out commit on Git' ${pro_name}
             cd $GIT_DIR && git checkout -f $commit && cd $BASE_DIR;
-            
+
             # Delete everything from SVN and copy new files from Git
             echo '... copying files' ${pro_name}
             rm -rf $SVN_DIR/*;
             cp -prf $GIT_DIR/* $SVN_DIR/;
-            
+
             # Remove Git specific files from SVN
             for ignorefile in `find ${SVN_DIR} | grep .git | grep .gitignore`;
             do
                 rm -rf $ignorefile;
             done
-            
+
             # Add new files to SVN and commit
             svn_checkin && svn_commit;
             echo ""
@@ -177,10 +173,9 @@ done >&6
         ################主分支
         SVN_DIR="${CUR}/svn_repo/${pro_name}/trunk"
         COMMIT_COUNT=${max_count}
-        githis_name="main"
-        SVN_DIR="${CUR}/svn_repo/源码/trunk/"
+        SVN_DIR="${CUR}/svn_repo/${pro_name}/源码/trunk/"
         git2svn_start;
-        
+
         ###############分支
         cd ${CUR}/${pro_name}
         branches=$(git branch -r)
@@ -194,11 +189,11 @@ done >&6
             ### 忽略 HEAD master trunk git2svn*
             if [[ "$b_short_name" != "HEAD" && "$b_short_name" != "master" && "$b_short_name" != "trunk" && "$b_short_name" != git2svn* ]]; then
                 echo "----开始迁移分支：${b_name}"
-                # git pull origin ${b_short_name}:${b_short_name}            
+                # git pull origin ${b_short_name}:${b_short_name}
                 # svn mkdir --parents ${svn_url}${name}/branches/git2svn-${b_short_name} -m " import http://${git_name}@${git_ip}/${name}  分支${b_short_name}"
                 cd ${CUR}/${pro_name}
                 git checkout -f ${b_short_name}
-                SVN_DIR="${CUR}/svn_repo/源码/branches/${b_short_name}"
+                SVN_DIR="${CUR}/svn_repo/${pro_name}/源码/branches/${b_short_name}"
                 COMMIT_COUNT=${branch_max_count}
                 githis_name="${b_short_name}"
                 mkdir --parents ${SVN_DIR}
@@ -207,8 +202,8 @@ done >&6
                 git2svn_start;
             fi
         }
-        done     
-        ###############TAG        
+        done
+        ###############TAG
         cd ${CUR}/${pro_name}
         branches=$(git tag -l)
         #echo "----tags ${branches}"
@@ -222,18 +217,18 @@ done >&6
             if [[ "$b_short_name" != "HEAD" && "$b_short_name" != "master" && "$b_short_name" != "trunk" && "$b_short_name" != git2svn* ]]; then
                 echo "----开始迁移tag：${b_name}"
                 cd ${CUR}/${pro_name}
-                #svn mkdir --parents ${svn_url}${name}/tags/git2svn-tag-${b_short_name} -m " import http://${git_name}@${git_ip}/${name}  tag${b_short_name}"            
+                #svn mkdir --parents ${svn_url}${name}/tags/git2svn-tag-${b_short_name} -m " import http://${git_name}@${git_ip}/${name}  tag${b_short_name}"
                 git checkout -f -b ${b_short_name} ${b_short_name}
-                SVN_DIR="${CUR}/svn_repo/源码/tags/${b_short_name}"
+                SVN_DIR="${CUR}/svn_repo/${pro_name}/源码/tags/${b_short_name}"
                 COMMIT_COUNT=${branch_max_count}
                 githis_name="${b_short_name}"
                 mkdir --parents ${SVN_DIR}
                 git2svn_start;
             fi
         }
-        done      
-      
-      
+        done
+
+
       ############################
       echo "----end ${name}"
         echo "" >&6

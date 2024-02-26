@@ -25,6 +25,7 @@
 # 修复多分支没有回到主目录bug
 
 #####################配置修改############################
+name="jadehh/svn-to-git"
 githis_name="main"
 svn_url="https://192.168.100.223/svn/P6-01-HG/svn-to-git"
 echo "--------2.2"
@@ -32,7 +33,14 @@ echo "--------2.2"
 max_count=10
 # 保留最近【分支和版本标签】历史提交记录的数量
 branch_max_count=1
-
+#git 仓库
+git_name="jadehh%40live.com"
+git_psw=""
+if [ -n $2 ]; then git_psw=$2
+fi
+echo ${git_psw}
+# git服务器的ip和端口,注意结尾不要有/
+git_ip="github.com"
 
 #svn 仓库
 svn_name="jiandehui"
@@ -53,6 +61,7 @@ thread_num=5
 git_url="https://${git_name}:${git_psw}@${git_ip}/"
 svn_login=" --username ${svn_name} --password ${svn_psw} "
 ####################主程序############################
+echo "----git_url:${git_url}"
 echo "----svn_url:${svn_url} ${svn_login}"
 echo "----list_file:${list_file}"
 # 路径
@@ -86,22 +95,26 @@ done >&6
 #######################
  read -u6
 {
-      echo "----start ${PWD}"
-      pro_name=${PWD##*/}
-
-      echo "拷贝git项目到 ${CUR}/${pro_name}"
-      cp -r $PWD ${CUR}/${pro_name}
-
+      echo "----start ${name}"
+      pro_name=${name##*/}
       echo $pro_name
       cd $CUR
       ###########清理文件#############
-
+      echo "---清理文件: 清理过程错误提示可忽略" ${name}
+      rm -rf ${CUR}/svn_repo/${pro_name}/源码
+      rm -rf ${CUR}/${pro_name}
+#      svn delete ${svn_url}/源码 ${svn_login} --message "Deleting ${svn_url}"
+#      svn mkdir --parents ${svn_url}/源码 -m "创建文件夹"
+      echo "---清理结束" ${name}
       mkdir ${CUR}/svn_repo/
       mkdir ${CUR}/svn_repo/${pro_name}
       BASE_DIR=$CUR
       GIT_DIR="${CUR}/${pro_name}"
       SVN_DIR="${CUR}/svn_repo/${pro_name}/源码/trunk"
+
       SVN_AUTH=$svn_login
+      #echo "----$name 当前路径" $PWD
+      git clone ${git_url}${name}.git
       cd $GIT_DIR
       #echo "----$name 当前路径" $PWD
       svn mkdir --parents ${svn_url}/源码/trunk ${svn_url}/源码/branches ${svn_url}/源码/tags -m "Importing git repo http://${git_name}@${git_ip}/${name}" ${svn_login}
